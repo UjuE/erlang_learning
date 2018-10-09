@@ -1,0 +1,19 @@
+#! /usr/bin/env escript
+
+-mode(compile).
+-import(temp, [convert/1]).
+-import(recursion, [average/1]).
+
+main(_) ->
+    Count = do_count(0),
+    io:format("Jumping: ~p~n", [Count]),
+    Stuff = b_not(false),
+    io:format("~p~n", [Stuff]),
+    io:format("Temp: ~p~n", [temp:convert({c, 100})]),
+    io:format("Recursive: ~p~n", [recursion:average([1,2,3])]).
+
+do_count(10) -> 10;
+do_count(N) -> do_count(N +1).
+
+b_not(X) ->
+  not X.
