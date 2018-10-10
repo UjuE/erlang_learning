@@ -39,7 +39,7 @@ create(1, Tail) -> [1 | Tail].
 
 %% He really prefers pattern matching in the function heads followed by case statements.
 %% His least favourite.
-%% This method
+%% This method begins from 1 and recursses to N
 createStartingFromOne(N) -> createStartingFromOne(1, N).
 createStartingFromOne(N, N) -> [N];
 createStartingFromOne(N, Y) -> [N | createStartingFromOne(N+1, Y)].
