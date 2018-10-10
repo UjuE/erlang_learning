@@ -10,24 +10,34 @@
 -author("ujuezeoke").
 
 %% API
--export([start/1, init/0, init/1]).
+-export([start/1, init/1]).
 
-
+%%timer:tc(ring, start, [10000]). Will time the run.
 start(NumberOfProcesses) ->
-  Process = startProcess(NumberOfProcesses - 1),
+  FirstProcessAlias = mainProcess,
+  Process = startProcess(NumberOfProcesses - 1, FirstProcessAlias),
   MainPid = spawn(ring, init, [Process]),
-  register(mainProcess, MainPid),
+  register(FirstProcessAlias, MainPid),
   ok.
 
-init(Processes) ->
+init([Head | Tail]) ->
   io:format("Starting main process~n"),
-  loop(Processes), ok.
-
-init() ->
+  loop([Head | Tail]), ok;
+init(FirstProcessAlias) ->
   io:format("Starting child process~n"),
-  loop(), ok.
+  loop(FirstProcessAlias), ok.
 
-loop() ->
+loop([Head | [TailHead | Tail]]) ->
+  receive
+    stop ->
+      io:format("Stoping main process, pid ~p~n", [self()]),
+      Head ! {TailHead, stop, Tail}, true;
+
+    Msg ->
+      io:format("Main Process ~p received: ~p~n", [self(), Msg]),
+      Head ! {TailHead, Msg, Tail}, loop([Head | [TailHead | Tail]]), ok
+  end;
+loop(FirstProcessAlias) ->
   receive
     {stop} ->
       io:format("Stoping pid ~p~n", [self()]),
@@ -46,29 +56,19 @@ loop() ->
     {To, Msg, []} ->
       io:format("Process ~p received: ~p. Sending message to ~p~n", [self(), Msg, To]),
       To ! {Msg},
-      loop();
+      loop(FirstProcessAlias);
 
     {To, Msg, [Head| Tail]} ->
       io:format("Process ~p received: ~p. Sending message to ~p~n", [self(), Msg, To]),
       To ! {Head, Msg, Tail},
-      loop();
+      loop(FirstProcessAlias);
 
     {Msg} ->
       io:format("Process ~p received: ~p. The last in the ring~n", [self(), Msg]),
-      loop()
+      FirstProcessAlias ! stop,
+      loop(FirstProcessAlias)
   end.
 
-loop([Head | [TailHead | Tail]]) ->
-  receive
-    stop ->
-      io:format("Stoping main process, pid ~p~n", [self()]),
-      Head ! {TailHead, stop, Tail}, true;
-
-    Msg ->
-      io:format("Main Process ~p received: ~p~n", [self(), Msg]),
-      Head ! {TailHead, Msg, Tail}, loop([Head | [TailHead | Tail]]), ok
-  end.
-
-startProcess(1) -> [spawn(ring, init, [])];
-startProcess(NumberOfProcesses) when NumberOfProcesses > 1 ->
-  [spawn(ring, init, [])] ++ startProcess(NumberOfProcesses - 1).
+startProcess(0, _) -> [];
+startProcess(NumberOfProcesses, FirstProcess) ->
+  [spawn(ring, init, [FirstProcess]) | startProcess(NumberOfProcesses - 1, FirstProcess)].
