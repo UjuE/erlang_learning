@@ -10,65 +10,79 @@
 -author("ujuezeoke").
 
 %% API
--export([start/1, init/0, init/1]).
+-export([start/3, init/3, init/2]).
 
 
-start(NumberOfProcesses) ->
-  Process = startProcess(NumberOfProcesses - 1),
-  MainPid = spawn(ring, init, [Process]),
+start(NumberOfProcesses, StartProcess, Msg) ->
+  Processes = startProcess(NumberOfProcesses - 1, [], NumberOfProcesses, mainProcess),
+  MainPid = spawn(crossover, init, [NumberOfProcesses, NumberOfProcesses / 2, Processes]),
   register(mainProcess, MainPid),
+  findPid(StartProcess, Processes) ! Msg,
   ok.
 
-init(Processes) ->
-  io:format("Starting main process~n"),
-  loop(Processes), ok.
+init(MaxNumber, HalfWay, Processes) ->
+  io:format("Starting Process 1~n"),
+  processOne(MaxNumber, HalfWay, Processes).
 
-init() ->
-  io:format("Starting child process~n"),
-  loop(), ok.
-
-loop() ->
-  receive
-    {stop} ->
-      io:format("Stoping pid ~p~n", [self()]),
-      true;
-
-    {To, stop, []} ->
-      io:format("Stoping pid ~p~n", [self()]),
-      To ! {stop},
-      true;
-
-    {To, stop, [Head| Tail] } ->
-      io:format("Stoping pid ~p~n", [self()]),
-      To ! {Head, stop, Tail},
-      true;
-
-    {To, Msg, []} ->
-      io:format("Process ~p received: ~p. Sending message to ~p~n", [self(), Msg, To]),
-      To ! {Msg},
-      loop();
-
-    {To, Msg, [Head| Tail]} ->
-      io:format("Process ~p received: ~p. Sending message to ~p~n", [self(), Msg, To]),
-      To ! {Head, Msg, Tail},
-      loop();
-
-    {Msg} ->
-      io:format("Process ~p received: ~p. The last in the ring~n", [self(), Msg]),
-      loop()
-  end.
-
-loop([Head | [TailHead | Tail]]) ->
+init(CurrentNumber, NextProcess) ->
+  io:format("Starting Process ~p~n", [CurrentNumber]),
   receive
     stop ->
-      io:format("Stoping main process, pid ~p~n", [self()]),
-      Head ! {TailHead, stop, Tail}, true;
+      io:format("Process: ~p terminating~n", [CurrentNumber]),
+      NextProcess ! stop,
+      true;
+
+    {_, Msg} ->
+      io:format("Process: ~p received: ~p~n", [CurrentNumber, Msg]),
+      NextProcess ! {CurrentNumber, Msg},
+      init(CurrentNumber, NextProcess);
 
     Msg ->
-      io:format("Main Process ~p received: ~p~n", [self(), Msg]),
-      Head ! {TailHead, Msg, Tail}, loop([Head | [TailHead | Tail]]), ok
+      io:format("Process: ~p received: ~p~n", [CurrentNumber, Msg]),
+      NextProcess ! {CurrentNumber, Msg},
+      init(CurrentNumber, NextProcess)
   end.
 
-startProcess(1) -> [spawn(ring, init, [])];
-startProcess(NumberOfProcesses) when NumberOfProcesses > 1 ->
-[spawn(ring, init, [])] ++ startProcess(NumberOfProcesses - 1).
+startProcess(NumberOfProcesses, List, NumberOfProcesses, FirstProcessAtom) ->
+io:format("The maximum Process is called ~p~n", [NumberOfProcesses]),
+startProcess(
+NumberOfProcesses - 1,
+[{NumberOfProcesses, spawn(crossover, init, [NumberOfProcesses, FirstProcessAtom])}] ++ List,
+NumberOfProcesses,
+FirstProcessAtom);
+
+startProcess(2, List, NumberOfProcesses, _) when NumberOfProcesses > 2 -> [{2, spawn(crossover, init, [2, findPid(3, List)])}] ++ List;
+
+startProcess(NumberOfProcesses, List, M, N) when NumberOfProcesses > 2 ->
+  startProcess(
+    NumberOfProcesses - 1,
+    [{NumberOfProcesses, spawn(crossover, init, [NumberOfProcesses, findPid(NumberOfProcesses + 1, List)])}] ++ List,
+    M,
+    N).
+
+processOne(MaxNumber, HalfWay, Processes) when MaxNumber > 1 ->
+  io:format("In the first process~n"),
+  receive
+    {MaxNumber, _} ->
+      io:format("Process: 1 terminating~n"),
+      findPid(2, Processes) ! stop,
+      true;
+
+    {HalfWay, Msg} ->
+      io:format("Process: 1 received: ~p halfway through~n", [Msg]),
+      findPid(HalfWay + 1, Processes) ! {1, Msg},
+      processOne(MaxNumber, HalfWay, Processes),
+      ok;
+
+    stop -> true;
+
+    Msg ->
+      io:format("Process: 1 received: ~p~n", [Msg]),
+      findPid(2, Processes) ! {1, Msg},
+      processOne(MaxNumber, HalfWay, Processes),
+      ok
+  end.
+
+findPid(_, []) -> [];
+findPid(N, [{N, Process} | _]) -> Process;
+findPid(N, [_ | Tail]) -> findPid(N, Tail).
