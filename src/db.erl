@@ -16,7 +16,7 @@ new() -> [].
 
 %% I am replicating what he did in class. I had it throw an exception.
 %% He choose the safe call route.
-destroy(DbRef) -> ok.
+destroy(_DbRef) -> ok.
 
 %% I used ++ He used List pattern
 %% he used [{Key, Element} | Db ]

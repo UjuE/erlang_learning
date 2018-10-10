@@ -13,6 +13,9 @@
 -export([start/1, init/1]).
 
 %%timer:tc(ring, start, [10000]). Will time the run.
+%% i(). checks all the running processes
+%% So the lecturer says we do not need to create a list.
+%%  The process can create the next process without having to hold it in a list.
 start(NumberOfProcesses) ->
   FirstProcessAlias = mainProcess,
   Process = startProcess(NumberOfProcesses - 1, FirstProcessAlias),
