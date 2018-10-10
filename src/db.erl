@@ -41,5 +41,5 @@ read(Key, [{Key, Element} | _]) -> {ok, Element};
 read(Key, [_ | Tail]) -> read(Key, Tail).
 
 match(_ , []) -> [];
-match(Element, [{Key, Element} | Tail]) -> [Key] ++ match(Element, Tail);
+match(Element, [{Key, Element} | Tail]) -> [Key | match(Element, Tail)];
 match(Element, [_ | Tail]) -> match(Element, Tail).
