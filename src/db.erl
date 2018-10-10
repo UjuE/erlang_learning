@@ -12,20 +12,30 @@
 %% API
 -export([new/0, destroy/1, write/3, delete/2, read/2, match/2]).
 
+new() -> [].
 
-new() ->
-  [].
+%% I am replicating what he did in class. I had it throw an exception.
+%% He choose the safe call route.
+destroy(DbRef) -> ok.
 
-destroy(DbRef) ->
-  erlang:error(not_implemented).
-
+%% I used ++ He used List pattern
+%% he used [{Key, Element} | Db ]
+%% I used DbRef ++ [{Key, Element}]... Maybe this was cheating
+%% After delete was created he used the delete to ensure that the keys are unique.
 write(Key, Element, DbRef) ->
-  DbRef ++ [{Key, Element}].
+  [{Key, Element} | delete(Key, DbRef)].
 
+
+%%Juan has his example on the board. It looks similar but he likes _Key to indicate an unbound variable.
+%% I like plain old _.
+%% The lecturer really prefers using pattern matching to create a new lis rather than concatenating.
+%% REMEMBER THIS use [HEAD | OldDb] rather than [HEAD] ++ OldDB.
+%% I think I get it now. I am creating a new list with a single element just to add that element to the old list.
 delete(_, []) -> [];
 delete(Key, [{Key, _} | Tail]) -> delete(Key, Tail);
-delete(Key, [ Head | Tail ]) -> [Head] ++ delete(Key, Tail).
+delete(Key, [ Head | Tail ]) -> [Head | delete(Key, Tail)].
 
+%% His is similar the difference is the catch all clause was used last in his.
 read(_, []) -> {error, instance};
 read(Key, [{Key, Element} | _]) -> {ok, Element};
 read(Key, [_ | Tail]) -> read(Key, Tail).
