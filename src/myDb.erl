@@ -11,7 +11,7 @@
 
 %% API
 -export([write/2, delete/1, read/1, match/1, stop/0, start/0, init/0]).
--import(db, [new/0, write/3, delete/2, read/2, match/2]).
+-import(db_ets, [new/0, write/3, delete/2, read/2, match/2]).
 
 write(Key, Element) ->
   myDb ! {write, Key, Element}.
@@ -34,7 +34,7 @@ start() ->
 
 init() ->
   io:format("Initialising~n"),
-  loop(db:new()).
+  loop(new()).
 
 loop(DbNew) ->
   io:format("In Loop~n"),
