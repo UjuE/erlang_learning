@@ -10,8 +10,11 @@
 -author("ujuezeoke").
 
 %% API
--export([factorial/1]).
+-export([factorial/1, printFactorial/1]).
 
 factorial(0) -> 1;
 factorial(N) ->
-  erlang:error(not_implemented).
+  N * factorial(N - 1).
+
+printFactorial(N) ->
+  io:format("The result: ~p~n", [factorial(N)]).
