@@ -20,14 +20,19 @@ start() ->
 %% This is called when a process is trying to take a mutex.
 %% if the process succeeds the state should be busy.
 wait() ->
-  ?MODULE ! {wait, self()},
-  receive
-    ok -> ok
-  end.
+  call(wait).
 
 %% This is called when the process that is holding the lock releases the lock
 signal() ->
-  ?MODULE ! {signal, self()},
+ call(signal).
+
+%% Stop
+stop() ->
+  call(stop).
+
+%% Abstracting wait and signal
+call(Action) ->
+  ?MODULE ! {Action, self()},
   receive
     ok -> ok
   end.
@@ -44,7 +49,7 @@ free() ->
       link(Process),
       Process ! ok,
       busy(Process);
-    stop -> true
+    {stop, Process} -> Process ! ok
   end.
 
 busy(Process) ->
