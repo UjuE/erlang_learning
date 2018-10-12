@@ -66,19 +66,19 @@ busy(Process) ->
 %%% This area is to spawn many processes that send wait and signal after a time
 startTest(0) -> ok;
 startTest(N) when N rem 7 == 0 ->
+  startTest(N - 1),
   spawn(?MODULE, holdAndKill, []),
   timer:sleep(100),
-  startTest(N - 1),
   ok;
 startTest(N) when N rem 3 == 0 ->
+  startTest(N - 1),
   spawn(?MODULE, killAfterHold, []),
   timer:sleep(10),
-  startTest(N - 1),
   ok;
 startTest(N) ->
+  startTest(N - 1),
   spawn(?MODULE, loopTest, []),
   timer:sleep(10),
-  startTest(N - 1),
   ok.
 
 loopTest() ->
