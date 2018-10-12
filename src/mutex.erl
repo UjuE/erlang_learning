@@ -13,21 +13,21 @@
 -export([start/0, wait/0, signal/0, init/0, startTest/1, loopTest/0, killAfterHold/0, holdAndKill/0]).
 
 start() ->
-  Pid = spawn(mutex, init, []),
-  register(mutex, Pid),
+  Pid = spawn(?MODULE, init, []),
+  register(?MODULE, Pid),
   ok.
 
 %% This is called when a process is trying to take a mutex.
 %% if the process succeeds the state should be busy.
 wait() ->
-  mutex ! {wait, self()},
+  ?MODULE ! {wait, self()},
   receive
     ok -> ok
   end.
 
 %% This is called when the process that is holding the lock releases the lock
 signal() ->
-  mutex ! {signal, self()},
+  ?MODULE ! {signal, self()},
   receive
     ok -> ok
   end.
@@ -61,17 +61,17 @@ busy(Process) ->
 %%% This area is to spawn many processes that send wait and signal after a time
 startTest(0) -> ok;
 startTest(N) when N rem 7 == 0 ->
-  spawn(mutex, holdAndKill, []),
+  spawn(?MODULE, holdAndKill, []),
   timer:sleep(100),
   startTest(N - 1),
   ok;
 startTest(N) when N rem 3 == 0 ->
-  spawn(mutex, killAfterHold, []),
+  spawn(?MODULE, killAfterHold, []),
   timer:sleep(10),
   startTest(N - 1),
   ok;
 startTest(N) ->
-  spawn(mutex, loopTest, []),
+  spawn(?MODULE, loopTest, []),
   timer:sleep(10),
   startTest(N - 1),
   ok.
