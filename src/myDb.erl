@@ -26,7 +26,7 @@ read(Key) ->
   ?MODULE ! call({read, Key}).
 
 match(Element) ->
-  ?MODULE ! call({match, Element}).
+  ?MODULE ! call({match, Element  }).
 
 stop() ->
   ?MODULE ! call(stop).
