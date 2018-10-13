@@ -16,5 +16,5 @@ factorial(0) -> 1;
 factorial(N) ->
   N * factorial(N - 1).
 
-printFactorial(N) ->
-  io:format("The result: ~p~n", [factorial(N)]).
+printFactorial(Number) ->
+  io:format("The result: ~p~n", [factorial(Number)]).
